@@ -20,7 +20,7 @@ Serveur Montalieu-Vercieu : 0 : 2026-06-23 16:20
 Serveur Montcarra : 1
 Serveur Moras : 1
 Serveur Morestel : 1
-Serveur Optevoz : 1
+Serveur Optevoz : 0 : 2026-06-24 8:33
 Serveur Panossas : 1
 Serveur Parmilieu : 1
 Serveur Porcieu-Amblagnieu : 1
