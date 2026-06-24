@@ -1,65 +1,123 @@
-fetch('status.txt?' + new Date().getTime())
-    .then(response => response.text())
-    .then(data => {
+fetch('status.txt?' + Date.now())
+.then(response => response.text())
+.then(data => {
 
-        const lignes = data.split('\n');
+    const lignes = data.split('\n');
 
-        const alertes = document.getElementById('alertes');
-        const serveurs = document.getElementById('serveurs');
+    const alertes = document.getElementById('alertes');
+    const serveurs = document.getElementById('serveurs');
+    const resume = document.getElementById('resume');
 
-        alertes.innerHTML = '';
-        serveurs.innerHTML = '';
+    alertes.innerHTML = '';
+    serveurs.innerHTML = '';
 
-        lignes.forEach(ligne => {
+    let nbPannes = 0;
 
-            ligne = ligne.trim();
+    lignes.forEach(ligne => {
 
-            if (!ligne) return;
+        ligne = ligne.trim();
 
-            const index = ligne.lastIndexOf(':');
+        if (!ligne) return;
 
-            if (index === -1) return;
+        const morceaux = ligne.split(':');
 
-            const nom = ligne.substring(0, index).trim();
-            const etat = ligne.substring(index + 1).trim();
+        const nom = morceaux[0].trim();
+        const etat = morceaux[1].trim();
 
-            const estEnErreur = Number(etat) !== 1;
+        const estEnErreur = Number(etat) === 0;
 
-            const div = document.createElement('div');
-            div.className = 'server';
+        let datePanne = '';
+
+        if (morceaux.length >= 4) {
+
+            datePanne =
+                morceaux[2].trim() + ':' +
+                morceaux[3].trim();
+        }
+
+        const div = document.createElement('div');
+        div.className = 'server';
+
+        if (estEnErreur) {
+
+            nbPannes++;
+
+            let dureeHTML = '';
+
+            if (datePanne) {
+
+                const debut = new Date(datePanne.replace(' ', 'T'));
+                const maintenant = new Date();
+
+                const diff = maintenant - debut;
+
+                const jours = Math.floor(diff / 86400000);
+                const heures = Math.floor((diff % 86400000) / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+
+                dureeHTML = `
+                    <div class="panne-info">
+                        Depuis : ${datePanne}<br>
+                        Durée : ${jours} j ${heures} h ${minutes} min
+                    </div>
+                `;
+            }
 
             div.innerHTML = `
-                <span class="server-name">${nom}</span>
-                <span class="status ${estEnErreur ? 'offline' : 'online'}">
-                    ${estEnErreur ? 'Hors Service' : 'Fonctionnel'}
+                <div>
+                    <div class="server-name">${nom}</div>
+                    ${dureeHTML}
+                </div>
+
+                <span class="status offline">
+                    Hors Service
                 </span>
             `;
 
-            if (estEnErreur) {
-                div.classList.add('error-server');
-                alertes.appendChild(div);
-            } else {
-                serveurs.appendChild(div);
-            }
+            div.classList.add('error-server');
 
-        });
+            alertes.appendChild(div);
 
-        if (alertes.children.length === 0) {
-            alertes.innerHTML = `
-                <div class="all-ok">
-                    ✅ Tous les serveurs sont opérationnels
-                </div>
+        } else {
+
+            div.innerHTML = `
+                <span class="server-name">${nom}</span>
+
+                <span class="status online">
+                    Fonctionnel
+                </span>
             `;
+
+            serveurs.appendChild(div);
         }
 
-    })
-    .catch(error => {
+    });
 
-        console.error(error);
+    if (nbPannes > 0) {
 
-        document.getElementById('alertes').innerHTML = `
-            <div class="critical-error">
-                ❌ Impossible de charger le fichier status.txt
+        resume.innerHTML = `
+            <div class="incident-banner">
+                🚨 INCIDENT EN COURS - ${nbPannes} serveur(s) en panne
             </div>
         `;
-    });
+
+    } else {
+
+        resume.innerHTML = `
+            <div class="all-ok">
+                ✅ Tous les serveurs sont opérationnels
+            </div>
+        `;
+    }
+
+})
+.catch(error => {
+
+    console.error(error);
+
+    document.getElementById('resume').innerHTML = `
+        <div class="critical-error">
+            ❌ Impossible de charger status.txt
+        </div>
+    `;
+});
